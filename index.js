@@ -1,6 +1,6 @@
 import express from "express";
 import session from "express-session";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";   // ← corregido
 import { pool } from "./db.js";
 
 const app = express();
@@ -39,7 +39,9 @@ app.post("/login-procesar", async (req, res) => {
     return res.render("index", { error: "Usuario incorrecto" });
 
   const usuarioDB = query.rows[0];
-  const claveCorrecta = await bcrypt.compare(pass, usuarioDB.password);
+
+  // Comparar contraseña con bcryptjs
+  const claveCorrecta = await bcrypt.compare(pass, usuarioDB.pass);
 
   if (!claveCorrecta)
     return res.render("index", { error: "Contraseña incorrecta" });
@@ -53,7 +55,7 @@ app.get("/menu", isLogged, (req, res) => {
   res.render("menu");
 });
 
-// LISTADOS Y FORMULARIOS
+// LISTADO DE BAILARINES
 app.get("/bailarines", isLogged, async (req, res) => {
   const q = await pool.query("SELECT * FROM bailarines ORDER BY id DESC");
   res.render("bailarines", { lista: q.rows });
@@ -70,6 +72,7 @@ app.post("/bailarines", isLogged, async (req, res) => {
   res.redirect("/bailarines");
 });
 
+// VESTUARIO
 app.get("/vestuario", isLogged, async (req, res) => {
   const q = await pool.query("SELECT * FROM inventario ORDER BY id DESC");
   res.render("vestuario", { lista: q.rows });
@@ -86,7 +89,7 @@ app.post("/guardar-vestuario", isLogged, async (req, res) => {
   res.redirect("/vestuario");
 });
 
-// Entrega
+// ENTREGA
 app.get("/entrega", isLogged, async (req, res) => {
   const bailarines = await pool.query("SELECT * FROM bailarines");
   const inventario = await pool.query("SELECT * FROM inventario");
@@ -105,7 +108,7 @@ app.post("/entregar", isLogged, async (req, res) => {
   res.redirect("/entrega");
 });
 
-// Devolución
+// DEVOLUCIÓN
 app.get("/devolucion", isLogged, async (req, res) => {
   const entregas = await pool.query(`
     SELECT e.id, b.nombre AS bailarin, i.nombre AS prenda
@@ -123,7 +126,7 @@ app.post("/devolver", isLogged, async (req, res) => {
   res.redirect("/devolucion");
 });
 
-// Historial
+// HISTORIAL
 app.get("/historial", isLogged, async (req, res) => {
   const q = await pool.query(`
     SELECT 
@@ -155,10 +158,13 @@ app.get("/historial", isLogged, async (req, res) => {
   res.render("historial", { lista: q.rows });
 });
 
-// Cerrar sesión
+// LOGOUT
 app.get("/logout", (req, res) => {
   req.session.destroy();
   res.redirect("/");
 });
 
-app.listen(3000, () => console.log("Servidor corriendo en puerto 3000"));
+// PUERTO
+app.listen(process.env.PORT || 3000, () =>
+  console.log("Servidor corriendo en puerto 3000")
+);
