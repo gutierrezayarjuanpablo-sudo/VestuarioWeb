@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Vestuario</title>
+</head>
+<body>
+
+<a href="/menu">← Volver al menú</a>
+
+<h1>Gestión de Vestuario</h1>
+
+<h2>Añadir Nuevo Vestuario</h2>
+
+<form action="/guardar-vestuario" method="POST">
+
+    <label>Nombre:</label>
+    <input type="text" name="nombre" required>
+
+    <label>Categoría:</label>
+    <select name="categoria">
+        <option value="ballet">Ballet</option>
+        <option value="contemporaneo">Contemporáneo</option>
+        <option value="folclor">Folclor</option>
+        <option value="urbano">Urbano</option>
+        <option value="teatro">Teatro</option>
+        <option value="otro">Otro</option>
+    </select>
+
+    <label>Talla:</label>
+    <input type="text" name="talla" required>
+
+    <label>Cantidad:</label>
+    <input type="number" name="cantidad" value="1">
+
+    <button type="submit">Guardar</button>
+</form>
+
+<h2>Inventario</h2>
+
+<table border="1" cellpadding="5">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Categoría</th>
+            <th>Talla</th>
+            <th>Cantidad</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% lista.forEach(v => { %>
+        <tr>
+            <td><%= v.nombre %></td>
+            <td><%= v.categoria %></td>
+            <td><%= v.talla %></td>
+            <td><%= v.cantidad %></td>
+        </tr>
+        <% }) %>
+    </tbody>
+</table>
+
+</body>
+</html>

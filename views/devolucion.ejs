@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Devolución</title>
+</head>
+<body>
+
+<a href="/menu">← Volver al menú</a>
+
+<h1>Registrar Devolución</h1>
+
+<form action="/devolver" method="POST">
+
+    <label>Entrega realizada:</label>
+    <select name="entrega">
+        <% entregas.forEach(e => { %>
+            <option value="<%= e.id %>">
+                <%= e.bailarin %> - <%= e.prenda %>
+            </option>
+        <% }) %>
+    </select>
+
+    <button type="submit">Registrar devolución</button>
+</form>
+
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Entrega</title>
+</head>
+<body>
+
+<a href="/menu">← Volver al menú</a>
+
+<h1>Entrega de Vestuario</h1>
+
+<form action="/entregar" method="POST">
+
+    <label>Bailarín:</label>
+    <select name="bailarin">
+        <% bailarines.forEach(b => { %>
+            <option value="<%= b.id %>"><%= b.nombre %></option>
+        <% }) %>
+    </select>
+
+    <label>Vestuario:</label>
+    <select name="vestuario">
+        <% inventario.forEach(v => { %>
+            <option value="<%= v.id %>"><%= v.nombre %></option>
+        <% }) %>
+    </select>
+
+    <label>Cantidad:</label>
+    <input type="number" name="cantidad" value="1">
+
+    <button type="submit">Registrar entrega</button>
+</form>
+
+</body>
+</html>

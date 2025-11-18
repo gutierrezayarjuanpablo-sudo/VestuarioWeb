@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Bailarines</title>
+</head>
+<body>
+
+<a href="/menu">← Volver al menú</a>
+<h1>Añadir Bailarín</h1>
+
+<form action="/bailarines" method="POST">
+    <label>Nombre completo:</label>
+    <input type="text" name="nombre" required>
+
+    <label>Teléfono:</label>
+    <input type="text" name="telefono" required>
+
+    <button type="submit">Guardar</button>
+</form>
+
+<h2>Lista de Bailarines</h2>
+
+<table border="1" cellpadding="5">
+    <thead>
+        <tr>
+            <th>Nombre</th>
+            <th>Teléfono</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% lista.forEach(b => { %>
+            <tr>
+                <td><%= b.nombre %></td>
+                <td><%= b.telefono %></td>
+            </tr>
+        <% }) %>
+    </tbody>
+</table>
+
+</body>
+</html>

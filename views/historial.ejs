@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Historial</title>
+</head>
+<body>
+
+<a href="/menu">← Volver al menú</a>
+
+<h1>Historial de Movimientos</h1>
+
+<table border="1" cellpadding="5">
+    <thead>
+        <tr>
+            <th>Fecha</th>
+            <th>Tipo</th>
+            <th>Bailarín</th>
+            <th>Vestuario</th>
+            <th>Cantidad</th>
+        </tr>
+    </thead>
+    <tbody>
+        <% lista.forEach(r => { %>
+        <tr>
+            <td><%= r.fecha.toISOString().slice(0,10) %></td>
+            <td><%= r.tipo %></td>
+            <td><%= r.bailarin %></td>
+            <td><%= r.vestuario %></td>
+            <td><%= r.cantidad %></td>
+        </tr>
+        <% }) %>
+    </tbody>
+</table>
+
+</body>
+</html>
+    
