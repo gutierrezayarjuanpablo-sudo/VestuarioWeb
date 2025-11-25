@@ -98,17 +98,32 @@ app.get("/entrega", isLogged, async (req, res) => {
 app.post("/entregar", isLogged, async (req, res) => {
   const { bailarin, vestuario, cantidad } = req.body;
 
-  // Verificar existencia
-  const inv = await pool.query("SELECT cantidad FROM inventario WHERE id=$1", [
-    vestuario,
-  ]);
+  // Obtener cantidad disponible en inventario
+  const inv = await pool.query(
+    "SELECT cantidad FROM inventario WHERE id = $1",
+    [vestuario]
+  );
 
-  if (inv.rows.length === 0) return res.send("Error: vestuario inexistente.");
+  if (inv.rowCount === 0) {
+    return res.send(`
+      <script>
+        alert("Error: prenda no encontrada.");
+        window.history.back();
+      </script>
+    `);
+  }
 
   const disponible = inv.rows[0].cantidad;
 
-  if (cantidad > disponible)
-    return res.send("No hay suficientes prendas en inventario.");
+  // Si no alcanza → mostrar alert
+  if (cantidad > disponible) {
+    return res.send(`
+      <script>
+        alert("No hay suficientes prendas disponibles. Disponibles: ${disponible}");
+        window.history.back();
+      </script>
+    `);
+  }
 
   // Registrar entrega
   await pool.query(
@@ -117,13 +132,14 @@ app.post("/entregar", isLogged, async (req, res) => {
   );
 
   // Restar del inventario
-  await pool.query("UPDATE inventario SET cantidad = cantidad - $1 WHERE id=$2", [
-    cantidad,
-    vestuario,
-  ]);
+  await pool.query(
+    "UPDATE inventario SET cantidad = cantidad - $1 WHERE id = $2",
+    [cantidad, vestuario]
+  );
 
   res.redirect("/entrega");
 });
+
 
 // DEVOLUCIÓN
 app.get("/devolucion", isLogged, async (req, res) => {
