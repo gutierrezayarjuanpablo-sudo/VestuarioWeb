@@ -12,7 +12,7 @@ app.use(
   session({
     secret: "vestuario123",
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
   })
 );
 
@@ -30,17 +30,15 @@ app.get("/", (req, res) => {
 app.post("/login-procesar", async (req, res) => {
   const { Usuario, pass } = req.body;
 
-  const query = await pool.query(
-    "SELECT * FROM usuarios WHERE usuario = $1",
-    [Usuario]
-  );
+  const query = await pool.query("SELECT * FROM usuarios WHERE usuario = $1", [
+    Usuario,
+  ]);
 
   if (query.rowCount === 0)
     return res.render("index", { error: "Usuario incorrecto" });
 
   const usuarioDB = query.rows[0];
 
-  // 🔥 SIN BCRYPT → Validación simple
   if (pass !== usuarioDB.password)
     return res.render("index", { error: "Contraseña incorrecta" });
 
@@ -62,10 +60,10 @@ app.get("/bailarines", isLogged, async (req, res) => {
 app.post("/bailarines", isLogged, async (req, res) => {
   const { nombre, telefono } = req.body;
 
-  await pool.query(
-    "INSERT INTO bailarines(nombre, telefono) VALUES($1, $2)",
-    [nombre, telefono]
-  );
+  await pool.query("INSERT INTO bailarines(nombre, telefono) VALUES($1, $2)", [
+    nombre,
+    telefono,
+  ]);
 
   res.redirect("/bailarines");
 });
@@ -93,17 +91,36 @@ app.get("/entrega", isLogged, async (req, res) => {
   const inventario = await pool.query("SELECT * FROM inventario");
   res.render("entrega", {
     bailarines: bailarines.rows,
-    inventario: inventario.rows
+    inventario: inventario.rows,
   });
 });
 
 app.post("/entregar", isLogged, async (req, res) => {
   const { bailarin, vestuario, cantidad } = req.body;
 
+  // Verificar existencia
+  const inv = await pool.query("SELECT cantidad FROM inventario WHERE id=$1", [
+    vestuario,
+  ]);
+
+  if (inv.rows.length === 0) return res.send("Error: vestuario inexistente.");
+
+  const disponible = inv.rows[0].cantidad;
+
+  if (cantidad > disponible)
+    return res.send("No hay suficientes prendas en inventario.");
+
+  // Registrar entrega
   await pool.query(
     "INSERT INTO entregas(id_bailarin, id_inventario, cantidad) VALUES($1,$2,$3)",
     [bailarin, vestuario, cantidad]
   );
+
+  // Restar del inventario
+  await pool.query("UPDATE inventario SET cantidad = cantidad - $1 WHERE id=$2", [
+    cantidad,
+    vestuario,
+  ]);
 
   res.redirect("/entrega");
 });
@@ -111,10 +128,11 @@ app.post("/entregar", isLogged, async (req, res) => {
 // DEVOLUCIÓN
 app.get("/devolucion", isLogged, async (req, res) => {
   const entregas = await pool.query(`
-    SELECT e.id, b.nombre AS bailarin, i.nombre AS prenda
+    SELECT e.id, e.cantidad, b.nombre AS bailarin, i.nombre AS prenda
     FROM entregas e
-    JOIN bailarines b ON b.id=e.id_bailarin
-    JOIN inventario i ON i.id=e.id_inventario
+    JOIN bailarines b ON b.id = e.id_bailarin
+    JOIN inventario i ON i.id = e.id_inventario
+    WHERE e.devuelto = false
   `);
 
   res.render("devolucion", { entregas: entregas.rows });
@@ -123,8 +141,26 @@ app.get("/devolucion", isLogged, async (req, res) => {
 app.post("/devolver", isLogged, async (req, res) => {
   const { entrega } = req.body;
 
+  // Buscar la entrega
+  const q = await pool.query("SELECT * FROM entregas WHERE id=$1", [entrega]);
+  if (q.rowCount === 0) return res.send("Error: entrega inexistente");
+
+  const entregaDB = q.rows[0];
+
+  // Registrar devolución
   await pool.query("INSERT INTO devoluciones(id_entrega) VALUES($1)", [
-    entrega
+    entrega,
+  ]);
+
+  // Sumar inventario
+  await pool.query(
+    "UPDATE inventario SET cantidad = cantidad + $1 WHERE id=$2",
+    [entregaDB.cantidad, entregaDB.id_inventario]
+  );
+
+  // Marcar como devuelta
+  await pool.query("UPDATE entregas SET devuelto = true WHERE id = $1", [
+    entrega,
   ]);
 
   res.redirect("/devolucion");
@@ -146,7 +182,7 @@ app.get("/historial", isLogged, async (req, res) => {
     UNION ALL
 
     SELECT 
-      1 AS cantidad,
+      e.cantidad,
       d.created_at AS fecha,
       b.nombre AS bailarin,
       i.nombre AS vestuario,
